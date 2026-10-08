@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1f6b58" />
+    <meta name="description" content="广东省 A 级旅游景区智能客服" />
+    <title>粤游智答 · 景区智能客服</title>
+    <link rel="stylesheet" href="/styles.css?v=20261008-account-recovery" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <div class="brand-lockup">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none">
+              <path d="M5 23.5 12.5 12l4.2 6.1L21 10l6 13.5H5Z" fill="currentColor" opacity=".95" />
+              <path d="M8 25.5h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              <circle cx="23.7" cy="7.5" r="2.3" fill="#E8B968" />
+            </svg>
+          </div>
+          <div>
+            <div class="brand-name">粤游智答</div>
+            <div class="brand-caption">广东景区智能客服</div>
+          </div>
+          <button class="sidebar-toggle" id="sidebarToggleBtn" type="button" aria-label="收起侧边栏" aria-expanded="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="m14.5 6-6 6 6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </button>
+        </div>
+
+        <button class="new-chat-btn" id="newChatBtn" type="button">
+          <span class="button-icon" aria-hidden="true">+</span>
+          <span>开启新对话</span>
+        </button>
+
+        <div class="sidebar-section quick-section">
+          <div class="section-label">你可以这样问</div>
+          <button class="mini-prompt" type="button" data-prompt="广州有哪些适合亲子游的景区？">亲子游景区推荐 <span>↗</span></button>
+          <button class="mini-prompt" type="button" data-prompt="帮我查一下长隆野生动物世界的门票和开放时间。">查询门票和开放时间 <span>↗</span></button>
+          <button class="mini-prompt" type="button" data-prompt="周末从广州出发，有什么短途游推荐？">周末短途路线 <span>↗</span></button>
+        </div>
+
+        <div class="sidebar-section history-section">
+          <div class="section-label" id="historyLabel">最近对话</div>
+          <div id="conversationList" role="region" aria-labelledby="historyLabel" tabindex="0"><p class="empty-state">登录后查看历史对话</p></div>
+        </div>
+
+        <div class="sidebar-footer">
+          <div class="service-status"><span class="status-dot"></span><span data-service-status>正在连接</span></div>
+          <div class="profile-row">
+            <div class="profile-avatar" id="profileAvatar">游</div>
+            <div><strong id="profileTitle">未登录</strong><small id="profileSubtitle">登录后配置 API</small></div>
+            <button class="icon-btn" id="accountMenuBtn" type="button" aria-label="账户选项" aria-expanded="false">⋯</button>
+          </div>
+          <div class="account-menu" id="accountMenu" role="menu" aria-hidden="true">
+            <div class="account-menu-title">账户选项</div>
+            <button class="account-menu-item" id="loginBtn" type="button" role="menuitem">
+              <span class="menu-item-icon login-menu-icon">↗</span>
+              <span><strong id="loginMenuTitle">登录账户</strong><small id="loginMenuSubtitle">登录后开始使用</small></span>
+              <span class="menu-item-arrow">›</span>
+            </button>
+            <button class="account-menu-item" id="openKeyBtn" type="button" role="menuitem">
+              <span class="menu-item-icon key-menu-icon">⌘</span>
+              <span><strong>账户设置</strong><small>模型服务与密码找回验证</small></span>
+              <span class="menu-item-arrow">›</span>
+            </button>
+            <button class="account-menu-item is-hidden" id="changePasswordBtn" type="button" role="menuitem">
+              <span class="menu-item-icon key-menu-icon">⌑</span>
+              <span><strong>修改密码</strong><small>使用当前密码设置新密码</small></span>
+              <span class="menu-item-arrow">›</span>
+            </button>
+            <button class="account-menu-item is-hidden" id="feedbackBtn" type="button" role="menuitem">
+              <span class="menu-item-icon key-menu-icon">✎</span>
+              <span><strong>意见反馈</strong><small>告诉我们你的使用体验</small></span>
+              <span class="menu-item-arrow">›</span>
+            </button>
+            <a class="account-menu-item is-hidden" id="adminBtn" href="/admin" role="menuitem">
+              <span class="menu-item-icon help-menu-icon">⚙</span>
+              <span><strong>管理后台</strong><small>统计 · 反馈 · 用户管理</small></span>
+              <span class="menu-item-arrow">›</span>
+            </a>
+            <button class="account-menu-item" id="helpAccountBtn" type="button" role="menuitem">
+              <span class="menu-item-icon help-menu-icon">?</span>
+              <span><strong>使用说明</strong><small>了解登录和密钥设置</small></span>
+              <span class="menu-item-arrow">›</span>
+            </button>
+            <div class="menu-divider" id="accountMenuDivider"></div>
+            <button class="account-menu-item account-menu-danger" id="logoutBtn" type="button" role="menuitem">
+              <span class="menu-item-icon logout-menu-icon">↪</span>
+              <span><strong>退出账号</strong><small id="logoutMenuSubtitle">结束当前登录状态</small></span>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-panel">
+        <header class="topbar">
+          <div class="mobile-brand">
+            <button class="icon-btn mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="打开菜单">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
+            </button>
+            <span>粤游智答</span>
+          </div>
+          <div class="crumb"><span>智能客服</span><span class="crumb-slash">/</span><strong>景区咨询</strong></div>
+          <div class="topbar-actions">
+            <button class="online-pill" id="serviceStatusBtn" type="button" title="点击检查服务状态"><span class="status-dot"></span><span data-service-status>正在连接</span></button>
+            <button class="icon-btn" id="helpBtn" type="button" aria-label="帮助">
+              <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.6" /><path d="M9.8 9.2a2.3 2.3 0 1 1 3.9 1.7c-.9.8-1.7 1-1.7 2.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /><circle cx="12" cy="16.8" r=".8" fill="currentColor" /></svg>
+            </button>
+          </div>
+        </header>
+
+        <section class="chat-stage">
+          <div class="chat-scroll" id="chatScroll">
+            <div class="welcome-panel" id="welcomePanel">
+              <div class="welcome-kicker"><span class="sparkle">✦</span> 广东省 A 级旅游景区智能服务</div>
+              <h1>今天想去哪里？<br /><em>让旅途从一个问题开始。</em></h1>
+              <p class="welcome-copy">我可以帮你查询景区信息、门票与开放时间，也能根据出发地和偏好给你一份轻松的游玩建议。</p>
+              <div class="welcome-stats">
+                <div><strong>景区查询</strong><span>门票、时间与地址</span></div>
+                <div><strong>多轮对话</strong><span>承接你的问题</span></div>
+                <div><strong>偏好推荐</strong><span>按需挑选景区</span></div>
+              </div>
+              <div class="prompt-grid">
+                <button class="prompt-card" type="button" data-prompt="广州有哪些适合亲子游的景区？">
+                  <span class="prompt-icon prompt-icon-green">⌂</span>
+                  <span><strong>亲子出游</strong><small>找一个周末好去处</small></span>
+                  <span class="prompt-arrow">↗</span>
+                </button>
+                <button class="prompt-card" type="button" data-prompt="帮我查一下长隆野生动物世界的门票和开放时间。">
+                  <span class="prompt-icon prompt-icon-gold">◇</span>
+                  <span><strong>景区详情</strong><small>门票、时间、地址一站查</small></span>
+                  <span class="prompt-arrow">↗</span>
+                </button>
+                <button class="prompt-card" type="button" data-prompt="周末从广州出发，有什么短途游推荐？">
+                  <span class="prompt-icon prompt-icon-blue">⌁</span>
+                  <span><strong>周末短途</strong><small>帮我规划一条轻松路线</small></span>
+                  <span class="prompt-arrow">↗</span>
+                </button>
+              </div>
+            </div>
+            <button class="history-more" id="loadOlderBtn" type="button" hidden>加载更早的对话</button>
+            <p class="inline-error" id="historyError" role="alert" hidden></p>
+            <div class="messages" id="messages" aria-live="polite"></div>
+          </div>
+
+          <div class="composer-wrap">
+            <form class="composer" id="chatForm">
+              <textarea id="messageInput" rows="1" maxlength="4000" placeholder="问问广东的好风景……" aria-label="输入问题"></textarea>
+              <div class="composer-end">
+                <span class="enter-hint">Enter 发送</span>
+                <button class="send-btn" id="sendBtn" type="submit" aria-label="发送消息">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="m4.5 4.8 15 7.2-15 7.2 2.4-6.5 7-.7-7-.7-2.4-6.5Z" fill="currentColor" /></svg>
+                </button>
+              </div>
+            </form>
+            <div class="composer-note">回答依据已收录资料整理，门票与开放时间请以景区最新公告为准。</div>
+          </div>
+        </section>
+      </main>
+
+      <aside class="insight-panel" id="insightPanel">
+        <div class="insight-header">
+          <div><span class="eyebrow">EXPLORE</span><h2>今日灵感</h2></div>
+          <button class="icon-btn" type="button" aria-label="切换景区" id="refreshBtn">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M19 8.5A7.5 7.5 0 1 0 20 13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /><path d="M19 4.5v4h-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </button>
+        </div>
+
+        <div class="featured-card" id="featuredCard">
+          <div class="featured-image scene-1" id="featuredImage" aria-label="广东第一峰景观示意图">
+            <div class="image-glow"></div>
+            <div class="mountain mountain-back"></div>
+            <div class="mountain mountain-front"></div>
+            <div class="sun-disc"></div>
+            <button class="carousel-arrow carousel-prev" id="carouselPrevBtn" type="button" aria-label="上一个景区">‹</button>
+            <button class="carousel-arrow carousel-next" id="carouselNextBtn" type="button" aria-label="下一个景区">›</button>
+            <span class="image-label" id="featuredImageLabel">清远 · 云海</span>
+          </div>
+          <div class="featured-body">
+            <div class="card-overline"><span id="featuredBadge">山野风光</span></div>
+            <h3 id="featuredTitle">广东第一峰</h3>
+            <p id="featuredDescription">在山野与云海之间，放慢一个周末。</p>
+            <div class="tag-row" id="featuredTags"><span>自然风光</span><span>登山</span><span>清凉</span></div>
+            <button class="text-action" id="featuredPrompt" type="button" data-prompt="介绍一下广东第一峰，适合什么时候去？">了解景区 <span>→</span></button>
+            <div class="carousel-meta"><div class="carousel-dots" id="carouselDots" aria-label="景区轮播位置"></div><span id="carouselCounter">1 / 5</span></div>
+          </div>
+        </div>
+
+        <div class="insight-section">
+          <div class="insight-title"><span>探索目的地</span></div>
+          <div class="destination-list">
+            <button class="destination-item" type="button" data-prompt="介绍一下丹霞山景区，有什么值得看的？">
+              <span class="destination-thumb thumb-red">丹</span><span><strong>丹霞山</strong><small>韶关 · 世界自然遗产</small></span><span class="list-arrow">↗</span>
+            </button>
+            <button class="destination-item" type="button" data-prompt="介绍一下西樵山景区，适合一天游吗？">
+              <span class="destination-thumb thumb-green">樵</span><span><strong>西樵山</strong><small>佛山 · 岭南名山</small></span><span class="list-arrow">↗</span>
+            </button>
+            <button class="destination-item" type="button" data-prompt="介绍一下惠州西湖，有哪些游玩建议？">
+              <span class="destination-thumb thumb-blue">湖</span><span><strong>惠州西湖</strong><small>惠州 · 城市山水</small></span><span class="list-arrow">↗</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="insight-tip">
+          <div class="tip-icon">✦</div>
+          <div><strong>小提示</strong><p>告诉我你的出发地、同行人和时间，我能给出更贴合的推荐。</p></div>
+        </div>
+      </aside>
+    </div>
+    <div class="modal-backdrop" id="keyModal" aria-hidden="true">
+      <section class="key-modal" role="dialog" aria-modal="true" aria-labelledby="keyModalTitle">
+        <button class="modal-close" id="closeKeyModalBtn" type="button" aria-label="关闭弹窗">×</button>
+        <div class="modal-kicker"><span class="modal-kicker-icon">⌘</span> 继续使用智能服务</div>
+        <h2 id="keyModalTitle">设置 API 密钥</h2>
+        <p class="modal-copy">配置你使用的模型服务，保存后即可开始提问。</p>
+        <label class="field-label" for="providerSelect">服务商</label>
+        <div class="select-wrap">
+          <select id="providerSelect">
+            <option value="deepseek">DeepSeek</option>
+            <option value="openai">OpenAI</option>
+            <option value="custom">其他服务商</option>
+          </select>
+          <span>⌄</span>
+        </div>
+        <label class="field-label" for="providerUrlInput">服务商 URL</label>
+        <div class="key-input-wrap url-input-wrap">
+          <input id="providerUrlInput" type="url" autocomplete="url" placeholder="https://api.example.com/v1" />
+        </div>
+        <label class="field-label" for="modelNameInput">模型名称</label>
+        <div class="key-input-wrap"><input id="modelNameInput" type="text" maxlength="200" autocomplete="off" placeholder="填写服务商提供的模型名称" /></div>
+        <label class="field-label" for="apiKeyInput">API 密钥</label>
+        <div class="key-input-wrap">
+          <input id="apiKeyInput" type="password" autocomplete="off" placeholder="请输入你的 API 密钥" />
+          <button id="toggleKeyVisibilityBtn" type="button" aria-label="显示或隐藏密钥">显示</button>
+        </div>
+        <p class="field-hint" id="keyHint">首次配置请填写密钥。</p>
+        <p class="inline-error" id="settingsError" role="alert" hidden></p>
+        <div class="security-note"><span>i</span><p>配置保存在当前账户中。再次打开时不会显示完整密钥。</p></div>
+        <div class="modal-actions"><button class="modal-secondary" id="cancelKeyBtn" type="button">取消</button><button class="modal-primary" id="saveKeyBtn" type="button">保存并继续</button></div>
+        <section class="identity-settings" aria-labelledby="identitySettingsTitle">
+          <h3 id="identitySettingsTitle">密码找回验证</h3>
+          <p class="modal-copy">设置后，忘记密码时需准确回答以下三项。留空可关闭此找回方式。</p>
+          <label class="field-label" for="identityNameInput">你的姓名</label>
+          <div class="key-input-wrap"><input id="identityNameInput" type="text" maxlength="200" autocomplete="off" /></div>
+          <label class="field-label" for="identityBirthInput">出生日期</label>
+          <div class="key-input-wrap"><input id="identityBirthInput" type="text" maxlength="40" placeholder="例如：2000-01-01" autocomplete="off" /></div>
+          <label class="field-label" for="identityPhraseInput">身份验证的一段话</label>
+          <div class="key-input-wrap"><input id="identityPhraseInput" type="text" maxlength="500" autocomplete="off" /></div>
+          <p class="field-hint" id="identityStatus">正在读取设置状态…</p>
+          <p class="inline-error" id="identityError" role="alert" hidden></p>
+          <div class="modal-actions"><button class="modal-primary" id="saveIdentityBtn" type="button">保存验证信息</button></div>
+        </section>
+      </section>
+    </div>
+    <div class="modal-backdrop" id="changePasswordModal" aria-hidden="true">
+      <section class="key-modal" role="dialog" aria-modal="true" aria-labelledby="changePasswordTitle">
+        <button class="modal-close" id="closeChangePasswordBtn" type="button" aria-label="关闭窗口">×</button>
+        <div class="modal-kicker"><span class="modal-kicker-icon">⌑</span> 已登录账户</div>
+        <h2 id="changePasswordTitle">修改密码</h2>
+        <p class="modal-copy">输入当前密码后设置新密码。忘记当前密码时，请使用登录页的“忘记密码”验证身份信息。</p>
+        <label class="field-label" for="currentPasswordInput">当前密码</label>
+        <div class="key-input-wrap"><input id="currentPasswordInput" type="password" maxlength="256" autocomplete="current-password" /></div>
+        <label class="field-label" for="newPasswordInput">新密码</label>
+        <div class="key-input-wrap"><input id="newPasswordInput" type="password" maxlength="16" autocomplete="new-password" placeholder="字母数字组合，8–16 位" /></div>
+        <label class="field-label" for="confirmNewPasswordInput">确认新密码</label>
+        <div class="key-input-wrap"><input id="confirmNewPasswordInput" type="password" maxlength="16" autocomplete="new-password" /></div>
+        <p class="inline-error" id="changePasswordError" role="alert" hidden></p>
+        <div class="modal-actions"><button class="modal-secondary" id="cancelChangePasswordBtn" type="button">取消</button><button class="modal-primary" id="submitChangePasswordBtn" type="button">验证并修改</button></div>
+      </section>
+    </div>
+    <div class="modal-backdrop" id="loginModal" aria-hidden="true">
+      <section class="key-modal login-modal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
+        <button class="modal-close" id="closeLoginModalBtn" type="button" aria-label="关闭弹窗">×</button>
+        <div class="modal-kicker"><span class="modal-kicker-icon">↗</span> 登录后开始使用</div>
+        <h2 id="loginModalTitle">登录账户</h2>
+        <p class="modal-copy" id="loginModalCopy">登录后可以保存你的服务配置，并使用自己的 API 进行提问。</p>
+        <div class="auth-extra" id="loginFields">
+          <label class="field-label" for="accountInput">用户名</label>
+          <div class="key-input-wrap"><input id="accountInput" type="text" maxlength="64" autocomplete="username" placeholder="中文、字母、数字、下划线或短横线" /></div>
+          <label class="field-label" for="passwordInput">密码</label>
+          <div class="key-input-wrap"><input id="passwordInput" type="password" maxlength="16" autocomplete="current-password" placeholder="请输入密码" /></div>
+        </div>
+        <div class="auth-extra is-hidden" id="registerPasswordConfirmRow">
+          <label class="field-label" for="passwordConfirmInput">确认密码</label>
+          <div class="key-input-wrap"><input id="passwordConfirmInput" type="password" maxlength="16" autocomplete="new-password" placeholder="请再次输入密码" /></div>
+        </div>
+        <p class="inline-error" id="authError" role="alert" hidden></p>
+        <div class="security-note login-note"><span>i</span><p id="loginNoteText">使用已有账户登录，或注册新账户。密码 8–16 位、仅限字母和数字、不能以数字开头。</p></div>
+        <div class="auth-links">
+          <button class="auth-switch" id="authSwitchBtn" type="button">没有账号？立即注册</button>
+          <button class="auth-switch" id="authForgotBtn" type="button">忘记密码？</button>
+        </div>
+        <div class="modal-actions"><button class="modal-secondary" id="cancelLoginBtn" type="button">取消</button><button class="modal-primary" id="submitLoginBtn" type="button">登录并继续</button></div>
+      </section>
+    </div>
+    <div class="modal-backdrop" id="recoveryModal" aria-hidden="true">
+      <section class="key-modal recovery-modal" role="dialog" aria-modal="true" aria-labelledby="recoveryModalTitle">
+        <button class="modal-close" id="closeRecoveryModalBtn" type="button" aria-label="关闭窗口">×</button>
+        <div class="modal-kicker"><span class="modal-kicker-icon">?</span> 账户验证</div>
+        <h2 id="recoveryModalTitle">找回密码</h2>
+        <p class="modal-copy">回答账户设置中的三项信息后即可设置新密码。</p>
+        <label class="field-label" for="recoveryUsernameInput">用户名</label>
+        <div class="key-input-wrap"><input id="recoveryUsernameInput" type="text" maxlength="64" autocomplete="username" /></div>
+        <label class="field-label" for="recoveryNameInput">你的姓名</label>
+        <div class="key-input-wrap"><input id="recoveryNameInput" type="text" maxlength="200" autocomplete="off" /></div>
+        <label class="field-label" for="recoveryBirthInput">出生日期</label>
+        <div class="key-input-wrap"><input id="recoveryBirthInput" type="text" maxlength="40" autocomplete="off" /></div>
+        <label class="field-label" for="recoveryPhraseInput">身份验证的一段话</label>
+        <div class="key-input-wrap"><input id="recoveryPhraseInput" type="text" maxlength="500" autocomplete="off" /></div>
+        <label class="field-label" for="recoveryNewPasswordInput">新密码</label>
+        <div class="key-input-wrap"><input id="recoveryNewPasswordInput" type="password" maxlength="16" autocomplete="new-password" placeholder="字母数字组合，8–16 位" /></div>
+        <label class="field-label" for="recoveryConfirmInput">确认新密码</label>
+        <div class="key-input-wrap"><input id="recoveryConfirmInput" type="password" maxlength="16" autocomplete="new-password" /></div>
+        <p class="inline-error" id="recoveryError" role="alert" hidden></p>
+        <div class="modal-actions"><button class="modal-secondary" id="cancelRecoveryBtn" type="button">返回登录</button><button class="modal-primary" id="submitRecoveryBtn" type="button">验证并修改</button></div>
+      </section>
+    </div>
+    <div class="modal-backdrop" id="feedbackModal" aria-hidden="true">
+      <section class="key-modal" role="dialog" aria-modal="true" aria-labelledby="feedbackModalTitle">
+        <button class="modal-close" id="closeFeedbackModalBtn" type="button" aria-label="关闭弹窗">×</button>
+        <div class="modal-kicker"><span class="modal-kicker-icon">✎</span> 我们在倾听</div>
+        <h2 id="feedbackModalTitle">意见反馈</h2>
+        <p class="modal-copy">告诉我们你在使用中遇到的问题或改进建议。</p>
+        <label class="field-label" for="feedbackInput">反馈内容</label>
+        <div class="key-input-wrap feedback-input-wrap"><textarea id="feedbackInput" rows="5" maxlength="1000" placeholder="请描述你的问题或建议（1000 字以内）"></textarea></div>
+        <p class="inline-error" id="feedbackError" role="alert" hidden></p>
+        <div class="modal-actions"><button class="modal-secondary" id="cancelFeedbackBtn" type="button">取消</button><button class="modal-primary" id="submitFeedbackBtn" type="button">提交反馈</button></div>
+      </section>
+    </div>
+    <div class="toast" id="toast" role="status"></div>
+    <script src="./app.js?v=20261008-password-options"></script>
+  </body>
+</html>

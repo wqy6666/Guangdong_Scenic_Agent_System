@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1f6b58" />
+    <title>管理后台 · 粤游智答</title>
+    <link rel="stylesheet" href="/styles.css?v=20261008-admin-page" />
+    <style>
+      body { min-height: 100vh; }
+      .admin-page { width: min(1080px, calc(100% - 40px)); margin: 0 auto; padding: 28px 0 48px; }
+      .admin-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
+      .admin-header h1 { margin: 0; font-size: 25px; }
+      .admin-header p { margin: 5px 0 0; color: var(--ink-soft); font-size: 12px; }
+      .admin-header-actions { display: flex; align-items: center; gap: 14px; }
+      .admin-header a { color: var(--primary-deep); font-size: 12px; font-weight: 700; text-decoration: none; }
+      .admin-tabs { width: 100%; margin: 22px 0 18px; }
+      .admin-section { margin-top: 16px; }
+      .admin-section.is-hidden { display: none; }
+      .stat-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+      .stat-card { display: flex; flex-direction: column; gap: 6px; padding: 20px 16px; background: #fff; border: 1px solid var(--line); border-radius: 8px; }
+      .stat-card strong { color: var(--primary-deep); font-size: 25px; }
+      .stat-card span { color: var(--ink-soft); font-size: 12px; }
+      .admin-hint { margin-top: 12px; color: var(--ink-soft); font-size: 12px; }
+      .admin-list { display: flex; flex-direction: column; gap: 8px; }
+      .admin-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 10px 0; }
+      .admin-toolbar select, .admin-toolbar button { min-height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink); }
+      .admin-table-wrap { overflow-x: auto; border: 1px solid var(--line); background: #fff; }
+      .admin-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+      .admin-table th, .admin-table td { padding: 11px 12px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+      .admin-table th { color: var(--ink-soft); background: #f6f8f6; font-weight: 700; }
+      .monitor-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+      .monitor-card { padding: 13px; border: 1px solid var(--line); background: #fff; border-radius: 6px; }
+      .monitor-card strong { display: block; margin-top: 6px; font-size: 18px; }
+      .monitor-card span { color: var(--ink-soft); font-size: 11px; }
+      .error-row { padding: 12px; border-bottom: 1px solid var(--line); background: #fff; }
+      .error-row header { display: flex; justify-content: space-between; gap: 10px; color: var(--ink-soft); font-size: 11px; }
+      .error-row p { margin: 7px 0 0; overflow-wrap: anywhere; }
+      .error-row small { color: var(--ink-faint); }
+      .user-row, .feedback-row { display: flex; align-items: center; gap: 12px; padding: 13px 14px; background: #fff; border: 1px solid var(--line); border-radius: 8px; }
+      .user-row-copy, .feedback-copy { display: flex; flex: 1; flex-direction: column; gap: 3px; min-width: 0; }
+      .user-row-copy small, .feedback-copy small { color: var(--ink-faint); font-size: 11px; }
+      .feedback-copy p { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; line-height: 1.7; }
+      .status-pill { flex: none; padding: 4px 9px; border-radius: 999px; color: var(--primary-deep); background: var(--primary-soft); font-size: 11px; }
+      .status-pill.is-disabled { color: #a13027; background: #f7e9e7; }
+      .text-action.user-toggle { flex: none; width: auto; margin: 0; }
+      .admin-error { margin: 12px 0; color: #a13027; font-size: 12px; }
+      .admin-error[hidden] { display: none; }
+      @media (max-width: 600px) {
+        .admin-page { width: calc(100% - 28px); padding-top: 18px; }
+        .admin-header { align-items: flex-start; }
+        .admin-header h1 { font-size: 21px; }
+        .admin-header-actions { flex-direction: column; align-items: flex-end; gap: 9px; }
+        .stat-grid { gap: 7px; }
+        .stat-card { padding: 14px 9px; }
+        .stat-card strong { font-size: 20px; }
+        .stat-card span { font-size: 10px; }
+        .user-row { flex-wrap: wrap; }
+        .admin-tabs { flex-wrap: wrap; }
+        .admin-tab { flex: 1 0 30%; }
+        .monitor-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="admin-page">
+      <header class="admin-header">
+        <div><h1>管理后台</h1><p id="adminIdentity">正在验证管理员身份…</p></div>
+        <div class="admin-header-actions"><a href="/">返回客服首页</a><a href="#" id="adminLogout">退出登录</a></div>
+      </header>
+      <nav class="admin-tabs" role="tablist" aria-label="后台管理">
+        <button class="admin-tab is-active" id="adminTabStats" type="button">数据统计</button>
+        <button class="admin-tab" id="adminTabSystem" type="button">系统监控</button>
+        <button class="admin-tab" id="adminTabErrors" type="button">错误统计</button>
+        <button class="admin-tab" id="adminTabTokens" type="button">Token 使用</button>
+        <button class="admin-tab" id="adminTabFeedback" type="button">用户反馈</button>
+        <button class="admin-tab" id="adminTabUsers" type="button">用户管理</button>
+      </nav>
+      <p class="admin-error" id="adminError" role="alert" hidden></p>
+      <section class="admin-section" id="adminStatsSection">
+        <div class="stat-grid">
+          <div class="stat-card"><strong id="statOpens">-</strong><span>网站打开次数</span></div>
+          <div class="stat-card"><strong id="statQuestions">-</strong><span>提问总次数</span></div>
+          <div class="stat-card"><strong id="statUsers">-</strong><span>注册用户数</span></div>
+        </div>
+        <div class="admin-hint">打开次数按首页加载计；提问次数按实际处理的问题计，重复提交不重复计数。</div>
+      </section>
+      <section class="admin-section is-hidden" id="adminSystemSection">
+        <div class="monitor-grid">
+          <div class="monitor-card"><span>问答引擎</span><strong id="monitorEngine">-</strong></div>
+          <div class="monitor-card"><span>CPU 使用率</span><strong id="monitorCpu">-</strong></div>
+          <div class="monitor-card"><span>系统内存</span><strong id="monitorMemory">-</strong></div>
+          <div class="monitor-card"><span>进程内存</span><strong id="monitorProcessMemory">-</strong></div>
+          <div class="monitor-card"><span>磁盘使用率</span><strong id="monitorDisk">-</strong></div>
+          <div class="monitor-card"><span>待处理问答</span><strong id="monitorQueue">-</strong></div>
+          <div class="monitor-card"><span>服务运行时间</span><strong id="monitorUptime">-</strong></div>
+          <div class="monitor-card"><span>最近采样</span><strong id="monitorTimestamp">-</strong></div>
+          <div class="monitor-card"><span>近 7 天提问</span><strong id="monitorRequests">-</strong></div>
+          <div class="monitor-card"><span>近 7 天成功 / 失败</span><strong id="monitorOutcomes">-</strong></div>
+          <div class="monitor-card"><span>近 7 天平均耗时</span><strong id="monitorLatency">-</strong></div>
+        </div>
+        <p class="admin-hint">资源数据每 15 秒刷新；错误详情见“错误统计”。</p>
+      </section>
+      <section class="admin-section is-hidden" id="adminErrorsSection">
+        <div class="admin-toolbar"><strong id="errorTotal">最近 7 天：0 条</strong><div><select id="errorDays"><option value="7">最近 7 天</option><option value="30">最近 30 天</option><option value="90">最近 90 天</option></select><button id="refreshErrors" type="button">刷新</button></div></div>
+        <p class="admin-hint" id="errorBreakdown"></p>
+        <div class="admin-list" id="errorList"><p class="empty-state">暂无问答错误</p></div>
+      </section>
+      <section class="admin-section is-hidden" id="adminTokensSection">
+        <div class="admin-toolbar"><strong>模型服务返回的 Token 用量</strong><select id="usagePeriod"><option value="today">今日</option><option value="month">本月</option></select></div>
+        <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>用户</th><th>输入 Token</th><th>输出 Token</th><th>调用数</th><th>未上报用量</th></tr></thead><tbody id="usageRows"><tr><td colspan="5">加载中…</td></tr></tbody></table></div>
+        <p class="admin-hint" id="usagePeriodLabel"></p>
+      </section>
+      <section class="admin-section is-hidden" id="adminFeedbackSection"><div class="admin-list" id="feedbackList"><p class="empty-state">加载中…</p></div></section>
+      <section class="admin-section is-hidden" id="adminUsersSection"><div class="admin-list" id="userList"><p class="empty-state">加载中…</p></div></section>
+    </main>
+    <script src="/admin.js?v=20261008-ops1"></script>
+  </body>
+</html>

@@ -1,0 +1,62 @@
+[
+  {
+    "mem_id": "341ead49-edda-4dd2-bc5d-1406da23f83c",
+    "session_id": "80c6aef4-1fe6-49b7-a3dd-ef2f6a775092",
+    "create_time": "2026-09-26T23:24:18.497820",
+    "source_query": "请记住我喜欢亲子游，预算100元。",
+    "content": "用户游玩偏好：{\"crowd\": \"亲子\", \"max_price\": 100}",
+    "tag": [
+      "user_preference",
+      "play_habit"
+    ],
+    "invalid": false
+  },
+  {
+    "mem_id": "6cb10840-af39-47f8-8efb-d137b7d96746",
+    "session_id": "8f887ec4-4a7f-4b98-89b0-bd5d259fa940",
+    "create_time": "2026-09-26T23:48:10.603288",
+    "source_query": "请记住我喜欢亲子游，预算100元。",
+    "content": "用户游玩偏好：{\"crowd\": \"亲子\", \"max_price\": 100}",
+    "tag": [
+      "user_preference",
+      "play_habit"
+    ],
+    "invalid": false
+  },
+  {
+    "mem_id": "6d17dbdc-eb9c-4068-945e-ab6eea5acd55",
+    "session_id": "f84da4a4-03fd-46a3-917d-b4d7b1a24277",
+    "create_time": "2026-09-26T23:56:12.541892",
+    "source_query": "请记住我喜欢亲子游，预算100元。",
+    "content": "用户游玩偏好：{\"crowd\": \"亲子\", \"max_price\": 100}",
+    "tag": [
+      "user_preference",
+      "play_habit"
+    ],
+    "invalid": false
+  },
+  {
+    "mem_id": "c6b73bb9-6ab8-4f10-b5d5-de3517765f34",
+    "session_id": "f13dc376-887b-4fff-bbbe-79e46af72b3b",
+    "create_time": "2026-09-27T00:09:47.266170",
+    "source_query": "请记住我喜欢亲子游，预算100元。",
+    "content": "用户游玩偏好：{\"crowd\": \"亲子\", \"max_price\": 100}",
+    "tag": [
+      "user_preference",
+      "play_habit"
+    ],
+    "invalid": false
+  },
+  {
+    "mem_id": "b8b9168f-6e6e-4c22-b5d1-e484b5a46624",
+    "session_id": "12e438da-606d-48ea-b618-7998eec7932a",
+    "create_time": "2026-09-29T21:36:39.553239",
+    "source_query": "记住我的预算是100元，其次我想选择的地方景区为适合亲子活动的景区",
+    "content": "用户游玩偏好：{\"crowd\": \"亲子\", \"max_price\": 100}",
+    "tag": [
+      "user_preference",
+      "play_habit"
+    ],
+    "invalid": false
+  }
+]

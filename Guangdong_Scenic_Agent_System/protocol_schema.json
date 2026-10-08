@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Scenic Customer Service Protocol",
+  "type": "object",
+  "required": [
+    "protocol",
+    "version",
+    "timestamp",
+    "request_id",
+    "code",
+    "message",
+    "data",
+    "error"
+  ],
+  "properties": {
+    "protocol": { "const": "scenic_customer_service" },
+    "version": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "request_id": { "type": "string", "minLength": 1 },
+    "code": { "type": "integer" },
+    "message": { "type": "string" },
+    "data": {
+      "anyOf": [
+        { "$ref": "#/$defs/successData" },
+        {
+          "type": "object",
+          "required": ["session_id"],
+          "properties": { "session_id": { "type": "string" } },
+          "additionalProperties": false
+        },
+        { "type": "null" }
+      ]
+    },
+    "error": {
+      "anyOf": [
+        { "$ref": "#/$defs/error" },
+        { "type": "null" }
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "spot": {
+      "type": "object",
+      "required": [
+        "spot_name",
+        "city",
+        "level",
+        "address",
+        "ticket",
+        "open_time",
+        "telephone"
+      ],
+      "properties": {
+        "spot_name": { "type": ["string", "null"] },
+        "city": { "type": ["string", "null"] },
+        "level": { "type": ["string", "null"] },
+        "address": { "type": ["string", "null"] },
+        "ticket": { "type": ["string", "number", "boolean", "null"] },
+        "open_time": { "type": ["string", "null"] },
+        "telephone": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "spot_name",
+        "source_url",
+        "source_domain",
+        "chunk_index"
+      ],
+      "properties": {
+        "spot_name": { "type": ["string", "null"] },
+        "source_url": { "type": ["string", "null"] },
+        "source_domain": { "type": ["string", "null"] },
+        "chunk_index": { "type": ["integer", "string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "successData": {
+      "type": "object",
+      "required": [
+        "session_id",
+        "query",
+        "answer",
+        "answer_type",
+        "route",
+        "route_confidence",
+        "route_reason",
+        "spots",
+        "sources",
+        "suggestions"
+      ],
+      "properties": {
+        "session_id": { "type": "string", "minLength": 1 },
+        "query": { "type": "string" },
+        "answer": { "type": "string" },
+        "answer_type": { "type": "string" },
+        "route": { "type": "string" },
+        "route_confidence": { "type": ["number", "null"] },
+        "route_reason": { "type": "array", "items": { "type": "string" } },
+        "spots": { "type": "array", "items": { "$ref": "#/$defs/spot" } },
+        "sources": { "type": "array", "items": { "$ref": "#/$defs/source" } },
+        "suggestions": { "type": "array" }
+      },
+      "additionalProperties": false
+    },
+    "error": {
+      "type": "object",
+      "required": ["type", "detail", "retryable"],
+      "properties": {
+        "type": { "type": "string" },
+        "detail": { "type": ["string", "null"] },
+        "retryable": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
