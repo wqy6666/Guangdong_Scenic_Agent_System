@@ -442,10 +442,19 @@ def classify_query(user_query: str, session_ctx: Dict[str, Any]) -> Dict[str, An
                 )
     # ==========【清单续传】"继续/剩下的景区呢/下一页"：上一轮分页清单未展示完 → 直接续传，不走澄清/规划器 ==========
     _list_pages = session_ctx.get("list_pages")
-    if (_list_pages and not user_has_new_entity and not filled_entities["spot_name"]
+    _list_city = str(_list_pages.get("city") or "").casefold() if isinstance(_list_pages, dict) else ""
+    _query_city = str(raw_entities.get("city") or "").casefold()
+    _same_list_city = not _query_city or _query_city == _list_city
+    _list_level = _list_pages.get("level") if isinstance(_list_pages, dict) else None
+    _query_level = raw_entities.get("level")
+    _same_list_level = not _query_level or not _list_level or _query_level == _list_level
+    if (_list_pages and _same_list_city and _same_list_level
+            and not filled_entities["spot_name"]
             and _contains_any(query, LIST_CONTINUE_WORDS)):
         filled_entities["list_continue"] = True
         filled_entities["city"] = _list_pages.get("city")
+        if not filled_entities.get("level") and _list_level:
+            filled_entities["level"] = _list_level
         fill_reasons.append(f"清单续传：{_list_pages.get('city')} 从第{_list_pages.get('offset', 0) + 1}家继续")
         return _decision(
             ROUTE_SCENIC_LIST,
