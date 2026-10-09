@@ -10,7 +10,7 @@ import tempfile
 import threading
 import time
 import unittest
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
 from pathlib import Path
 from unittest.mock import patch
 
@@ -24,6 +24,8 @@ from user_account import UserAccount
 from session_memory_manager import SessionMemoryManager
 from service_errors import LLMServiceError, strict_llm_errors
 from protocol1 import normalize_spots
+from file_store import write_json
+from security_controls import CHAT_LIMITER, LOGIN_LIMITER, RECOVERY_LIMITER, REGISTER_LIMITER
 
 
 class DeterministicEngine:
@@ -51,6 +53,9 @@ class DeterministicEngine:
 
 class WebIntegrationTests(unittest.TestCase):
     def setUp(self):
+        for limiter in (CHAT_LIMITER, LOGIN_LIMITER, RECOVERY_LIMITER, REGISTER_LIMITER):
+            with limiter._lock:
+                limiter._entries.clear()
         self.temp = tempfile.TemporaryDirectory(prefix="scenic-web-test-")
         self.root_patch = patch("user_account.USER_ROOT_DIR", self.temp.name)
         self.root_patch.start()
@@ -114,6 +119,8 @@ class WebIntegrationTests(unittest.TestCase):
         for name in ("../escape", "admin/foo", "CON", "..", "admin:other"):
             response = self.client.post("/api/auth/register", json={"username": name, "password": "password123"})
             self.assertEqual(response.status_code, 400, response.text)
+        with REGISTER_LIMITER._lock:
+            REGISTER_LIMITER._entries.clear()
         self.register()
         self.assertEqual(self.client.post("/api/auth/register", json={"username": "alice", "password": "password123"}).status_code, 409)
         self.assertEqual(self.client.post("/api/auth/register", json={"username": "bob", "password": "123"}).status_code, 400)
@@ -173,6 +180,33 @@ class WebIntegrationTests(unittest.TestCase):
             results = list(pool.map(lambda item: self.service.chat("alice", item[1], f"q{item[0]}", f"r{item[0]}"), enumerate(sids)))
         self.assertEqual(len(results), 3)
         self.assertEqual(self.engine.max_active, 1)
+
+    def test_chat_job_poll_does_not_wait_for_user_inference_lock(self):
+        self.register(); self.configure(); sid = self.new_session()
+        request_id = "poll-while-running"
+        user = UserAccount("alice")
+        write_json(self.service._job_path(user, sid, request_id), {
+            "request_id": request_id, "user_id": "alice", "session_id": sid,
+            "status": "running", "error": None,
+        })
+        lock = self.service.lock("alice")
+        lock.acquire()
+        pool = ThreadPoolExecutor(max_workers=1)
+        future = pool.submit(self.client.get, f"/api/chat/jobs/{sid}/{request_id}")
+        response = None
+        try:
+            try:
+                response = future.result(timeout=.5)
+            except FutureTimeoutError:
+                pass
+        finally:
+            lock.release()
+        if response is None:
+            response = future.result(timeout=2)
+        pool.shutdown(wait=True)
+        self.assertIsNotNone(response, "状态轮询被问答执行期间的用户锁阻塞")
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.json()["status"], "running")
 
     def test_persistence_survives_service_restart(self):
         self.register(); self.configure(); sid = self.new_session(); self.chat(sid)
