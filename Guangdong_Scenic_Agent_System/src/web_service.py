@@ -465,13 +465,19 @@ class WebService:
             return self._job_public(job)
 
     def chat_job(self, user_id, session_id, request_id):
-        with self.lock(user_id):
-            user = self.account(user_id)
-            self.session_path(user, session_id)
-            job = self._read_json(self._job_path(user, session_id, request_id), {})
-            if not job or job.get("user_id", "").casefold() != user.user_id.casefold():
-                raise ServiceError(404, "问答任务不存在。")
-            return self._job_public(job)
+        user = self.account(user_id)
+        if not re.fullmatch(r"[A-Za-z0-9_-]{1,100}", session_id):
+            raise ServiceError(404, "会话不存在或不属于当前账户。")
+        user_root = Path(user.user_folder).resolve()
+        session_path = (user_root / session_id).resolve()
+        if session_path.parent != user_root or not session_path.is_dir():
+            raise ServiceError(404, "会话不存在或不属于当前账户。")
+        # Job files are atomically replaced; polling must not wait for the user
+        # lock held across a potentially minutes-long model inference.
+        job = self._read_json(session_path / "web_jobs" / self._job_hash(request_id), {})
+        if not job or job.get("user_id", "").casefold() != user.user_id.casefold():
+            raise ServiceError(404, "问答任务不存在。")
+        return self._job_public(job)
 
     def history(self, user_id, session_id, before=None):
         with self.lock(user_id):
