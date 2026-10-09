@@ -946,6 +946,13 @@ def hybrid_query(
         cand_spots = [x["spot_name"] for x in sql_ctx]
         _update_session_subject_by_spots(session_ctx, cand_spots)
 
+    # A completed list remains available for "还有吗". Any other intent, or a
+    # new list request, starts a different conversational context.
+    if session_ctx.get("list_pages") and not (
+        route == ROUTE_SCENIC_LIST and entities.get("list_continue")
+    ):
+        session_ctx.pop("list_pages", None)
+
     if entities.get("has_pronoun") and not entities.get("spot_name") and not entities.get("city"):
         answer = "没有找到上文提到的景区，请告诉我具体景区或者城市名称。"
         result = _query_result(answer, [], return_metadata, "clarify", "clarification")
@@ -1364,8 +1371,12 @@ def hybrid_query(
             offset = int(lp.get("offset") or 0)
             batch = full_list[offset:offset + 15]
             if not batch:
-                session_ctx.pop("list_pages", None)
-                answer = f"{lp_city}的A级旅游景区清单已全部展示完毕。"
+                session_ctx["list_pages"] = {
+                    "city": lp_city, "level": lp_level,
+                    "offset": len(full_list), "total": len(full_list), "complete": True,
+                }
+                level_text = f"{lp_level}级" if lp_level else "A级"
+                answer = f"{lp_city}{level_text}旅游景区清单已经全部展示完毕，共{len(full_list)}家，目前没有更多未列出的景区。"
                 result = _query_result(answer, [], return_metadata, "scenic_list", "scenic_list")
                 session_ctx["last_intent_type"] = ROUTE_SCENIC_LIST
                 return _attach_route_metadata(result, return_metadata, route_info)
@@ -1380,10 +1391,13 @@ def hybrid_query(
                       f"共{len(full_list)}家）：\n" + "\n".join(scenic_lines))
             if remaining_after:
                 session_ctx["list_pages"] = {"city": lp_city, "level": lp_level,
-                                             "offset": offset + 15, "total": len(full_list)}
+                                             "offset": offset + len(batch), "total": len(full_list),
+                                             "complete": False}
                 answer += f"\n以上为第{batch_no}批，还剩{len(remaining_after)}家，如需继续查看请说“继续”。"
             else:
-                session_ctx.pop("list_pages", None)
+                session_ctx["list_pages"] = {"city": lp_city, "level": lp_level,
+                                             "offset": offset + len(batch), "total": len(full_list),
+                                             "complete": True}
                 answer += f"\n以上为最后一批，{lp_city}A级景区已全部展示完毕（共{len(full_list)}家）。"
             result = _query_result(answer, batch, return_metadata, "scenic_list", "scenic_list", batch)
             session_ctx["last_intent_type"] = ROUTE_SCENIC_LIST
@@ -1443,11 +1457,14 @@ def hybrid_query(
         shown_batch = sql_context[:15]
         remaining_batch = sql_context[15:]
 
-        if remaining_batch:
+        if shown_batch:
             session_ctx["list_pages"] = {
                 "city": city_name, "level": target_level,
-                "offset": 15, "total": total,
+                "offset": len(shown_batch), "total": total,
+                "complete": not remaining_batch,
             }
+        else:
+            session_ctx.pop("list_pages", None)
 
         scenic_lines = [
             f"{i}. {d['spot_name']}（{d.get('level') or '等级无'}）门票：{d.get('ticket') or '暂无'}"
