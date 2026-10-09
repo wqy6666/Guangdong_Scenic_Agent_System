@@ -1,16 +1,4 @@
 # -*- coding: utf-8 -*-
-""" agent_reflection_loop.py 【V3.0 回答核验闭环 + 问句分析与补全Agent】
-改动说明：
-1.【第二部分】反思循环改造为"回答核验闭环"：
-   - 判决对象从"资料摘要"改为"子问题清单 × 草稿回答全文"（不再压缩摘要）；
-   - 核验两个维度：覆盖完整（问了的都答了吗）+ 内容可溯源（关键事实在资料里有无出处）；
-   - 未通过则按核验器给的动作定向补检索（rag/sql），资料无从补充则如实声明；
-   - 最终回答生成后增加"后置核验"，缺哪段补挂对应资料原文/更正提示（纯拼接，零额外LLM）；
-2.【第一部分】接入问句分析与补全Agent（plan_sub_questions）：
-   - 歧义信号触发（多城市/多等级/复合连接词/无实体澄清类）才调用，普通单问题走快速通道；
-   - 子问题 decision=answer/clarify/skip 由Agent决定"回答多少、跳过多少"；
-   - Agent输出经词典校验后转成 pre_judge 注入 hybrid_query，跳过其内部Judge避免重复调用；
-3. make_info_summary / reflection_judge 退役，由 verify_answer_quality 取代。
 """
 import re
 import json
@@ -191,6 +179,11 @@ def _needs_query_planning(user_query: str, route_info: dict, is_lookup_meta: boo
     if not PLANNER_ENABLED or is_lookup_meta:
         return False
     entities = route_info.get("entities", {})
+    # A recognized list continuation is deterministic. The compound-word
+    # detector also matches "还有", but must not turn pagination into a new
+    # first-page query.
+    if entities.get("list_continue"):
+        return False
     # 信号0：多景区（"白云山只查门票，丹霞山只介绍地貌"）——逐景区约束交规划器生成干净子问题，
     # 避免B方案的公共约束提取把各景区约束混在一起污染子任务
     if _detect_multi_spot(user_query):
@@ -388,6 +381,13 @@ def _execute_sub_plan(sub_plan: List[dict], chat_history: List[Dict],
                 pre_judge=pre_judge,
                 curr_mem_mgr=curr_mem_mgr,
             )
+            # Pagination state is produced inside the child context. Preserve
+            # it on the main session so the next "继续/还有吗" resumes here,
+            # including after a planned sub-query.
+            if "list_pages" in sub_ctx:
+                session_ctx["list_pages"] = copy.deepcopy(sub_ctx["list_pages"])
+            else:
+                session_ctx.pop("list_pages", None)
             sub_answers.append(ans)
             sub_docs.extend(docs or [])
             spots = meta.get("spots", []) or []
