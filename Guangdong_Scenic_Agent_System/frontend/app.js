@@ -11,6 +11,8 @@ let deleteArmTimer;
 let modalReturnFocus;
 let featuredIndex = 0;
 const mobileLayout = window.matchMedia('(max-width: 760px)');
+const CHAT_REQUEST_TIMEOUT_MS = 30_000;
+const CHAT_JOB_TIMEOUT_MS = 30 * 60 * 1000;
 function syncSidebar() {
   const open = $('#sidebar').classList.contains('is-open');
   $('#sidebar').inert = mobileLayout.matches && !open;
@@ -159,9 +161,9 @@ async function selectSession(sessionId) {
 }
 function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
 async function waitForChatJob(sessionId, requestId, epoch) {
-  const deadline = Date.now() + 15 * 60 * 1000;
+  const deadline = Date.now() + CHAT_JOB_TIMEOUT_MS;
   while (Date.now() < deadline) {
-    const job = await api(`/chat/jobs/${encodeURIComponent(sessionId)}/${encodeURIComponent(requestId)}`, { timeout: 30000 });
+    const job = await api(`/chat/jobs/${encodeURIComponent(sessionId)}/${encodeURIComponent(requestId)}`, { timeout: CHAT_REQUEST_TIMEOUT_MS });
     if (epoch !== state.epoch) throw new Error('账户已切换，请重新提问。');
     if (job.status === 'succeeded') return job.result;
     if (job.status === 'failed' || job.status === 'interrupted') {
@@ -171,7 +173,7 @@ async function waitForChatJob(sessionId, requestId, epoch) {
     }
     await wait(1500);
   }
-  throw new Error('等待回答超时。任务可能仍在后台处理，请稍后查看历史或点击重试。');
+  throw new Error('等待回答超过 30 分钟。任务可能仍在后台处理，请稍后查看历史或点击重试。');
 }
 async function createSession() {
   const epoch = state.epoch; const data = await api('/sessions', { method: 'POST' });
@@ -203,7 +205,7 @@ async function submitMessage(rawText, retry = null) {
     if (retry) state.messages = state.messages.filter((message) => message !== retry);
     else state.messages.push({ role: 'user', text });
     $('#messageInput').value = ''; $('#messageInput').style.height = 'auto'; renderMessages();
-    const submitted = await api('/chat/jobs', { method: 'POST', timeout: 30000,
+    const submitted = await api('/chat/jobs', { method: 'POST', timeout: CHAT_REQUEST_TIMEOUT_MS,
       body: { session_id: state.sessionId, message: text, request_id: requestId } });
     const result = submitted.result || await waitForChatJob(state.sessionId, requestId, epoch);
     if (epoch !== state.epoch) return;
