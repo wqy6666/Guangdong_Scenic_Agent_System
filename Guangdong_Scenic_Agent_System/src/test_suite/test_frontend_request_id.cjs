@@ -13,7 +13,8 @@ function functionSource(start, end) {
   assert.ok(begin >= 0 && finish > begin);
   return source.slice(begin, finish);
 }
-const functions = functionSource('function createRequestId()', 'function showToast(') +
+const functions = functionSource('const CHAT_REQUEST_TIMEOUT_MS', 'function syncSidebar()') +
+  functionSource('function createRequestId()', 'function showToast(') +
   functionSource('async function submitMessage(', 'function resetArmedDelete(');
 
 function setup(crypto = { getRandomValues: webcrypto.getRandomValues.bind(webcrypto) }) {
@@ -30,9 +31,10 @@ function setup(crypto = { getRandomValues: webcrypto.getRandomValues.bind(webcry
     updateControls() {}, renderMessages() {},
     async refreshSessions() {},
     async api(url, options) {
-      assert.equal(url, '/chat');
+      assert.equal(url, '/chat/jobs');
+      assert.equal(options.timeout, 30_000);
       requests.push(options.body);
-      return { data: { answer: '测试回答', spots: [], sources: [] } };
+      return { result: { data: { answer: '测试回答', spots: [], sources: [] } } };
     }
   });
   vm.runInContext(functions, context);
