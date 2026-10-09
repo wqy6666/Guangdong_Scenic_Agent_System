@@ -53,6 +53,19 @@ class RouteClassifierTests(unittest.TestCase):
         result = route_classifier.classify_query("广州一共有多少景区")
         self.assertEqual(result["route"], route_classifier.ROUTE_SCENIC_COUNT)
 
+    def test_list_continuation_with_city_does_not_restart_first_page(self):
+        context = {
+            "list_pages": {"city": "广州", "level": "4A", "offset": 15, "total": 37},
+            "candidate_spot_list": [], "latest_subject": None, "city": "广州",
+            "level": "4A", "last_intent_type": route_classifier.ROUTE_SCENIC_LIST,
+        }
+        for query in ("继续", "还有吗", "广州还有吗", "广州4A还有哪些"):
+            result = route_classifier.classify_query(query, context)
+            self.assertEqual(result["route"], route_classifier.ROUTE_SCENIC_LIST, query)
+            self.assertTrue(result["entities"].get("list_continue"), query)
+            self.assertEqual(result["entities"]["city"], "广州")
+            self.assertEqual(result["entities"]["level"], "4A")
+
     def test_recommendation_does_not_use_sql_list_route(self):
         result = route_classifier.classify_query("广州适合亲子游的景区推荐")
         self.assertEqual(result["route"], route_classifier.ROUTE_RECOMMENDATION)
