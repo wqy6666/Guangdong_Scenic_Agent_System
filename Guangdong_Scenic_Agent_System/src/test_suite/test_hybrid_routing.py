@@ -34,6 +34,7 @@ sys.modules.setdefault("sentence_transformers", sentence_module)
 llm_module = types.ModuleType("llm_answer")
 llm_module.build_chat_messages = lambda *args, **kwargs: []
 llm_module.generate_answer_by_api = lambda *args, **kwargs: "模拟回答"
+llm_module.OUTPUT_FORMAT_RULE = ""
 sys.modules.setdefault("llm_answer", llm_module)
 
 with patch("pickle.load", return_value=[]), patch("sys.stdout", new=io.StringIO()):
@@ -137,6 +138,89 @@ class HybridRoutingTests(unittest.TestCase):
         self.assertIn("共有2个", answer)
         self.assertEqual(docs, rows)
         self.assertEqual(meta["route"], "scenic_list")
+
+    def test_list_continuation_returns_next_page(self):
+        rows = [
+            {"spot_name": f"景区{index}", "city": "广州", "level": "4A", "ticket": "暂无", "chunk_text": "资料"}
+            for index in range(1, 38)
+        ]
+        context = {
+            "list_pages": {"city": "广州", "level": "4A", "offset": 15, "total": 37},
+            "candidate_spot_list": [], "latest_subject": None, "city": "广州", "level": "4A",
+            "allow_cross_city": False, "focus_mode": False, "focus_keep_round": 0,
+            "user_preference": {}, "last_intent_type": "scenic_list",
+        }
+        with patch.object(rag_hybrid_query, "query_city_scenic_list", return_value=rows), patch.object(
+            rag_hybrid_query, "generate_answer_by_api", side_effect=AssertionError("pagination must not call LLM")
+        ):
+            answer, docs, meta = rag_hybrid_query.hybrid_query(
+                "广州还有吗", [], context, "test-session", 0, {}, return_metadata=True
+            )
+
+        self.assertIn("第2批，第16-30家", answer)
+        self.assertIn("景区16", answer)
+        self.assertNotIn("景区1（", answer)
+        self.assertEqual([item["spot_name"] for item in docs], [f"景区{index}" for index in range(16, 31)])
+        self.assertEqual(context["list_pages"]["offset"], 30)
+
+    def test_completed_list_answers_no_more_without_restarting_at_first_page(self):
+        rows = [
+            {"spot_name": f"景区{index}", "city": "广州", "level": "4A", "ticket": "暂无", "chunk_text": "资料"}
+            for index in range(1, 38)
+        ]
+        context = {
+            "candidate_spot_list": [], "latest_subject": None, "city": "广州", "level": "4A",
+            "allow_cross_city": False, "focus_mode": False, "focus_keep_round": 0,
+            "user_preference": {},
+        }
+
+        with patch.object(rag_hybrid_query, "query_city_scenic_list", return_value=rows), patch.object(
+            rag_hybrid_query, "generate_answer_by_api", side_effect=AssertionError("list answers must not call LLM")
+        ):
+            pages = []
+            for query in ("广州有哪些4A景区", "广州继续", "广州继续"):
+                answer, docs, _ = rag_hybrid_query.hybrid_query(
+                    query, [], context, "test-session", 0, {}, return_metadata=True
+                )
+                pages.append((answer, docs))
+
+            self.assertIn("一共有37个", pages[0][0])
+            self.assertIn("第16-30家", pages[1][0])
+            self.assertIn("第31-37家", pages[2][0])
+            self.assertTrue(context["list_pages"]["complete"])
+            self.assertEqual(context["list_pages"]["offset"], 37)
+
+            answer, docs, meta = rag_hybrid_query.hybrid_query(
+                "还有吗？还是已经没有了", [], context, "test-session", 0, {}, return_metadata=True
+            )
+
+        self.assertIn("已经全部展示完毕", answer)
+        self.assertIn("目前没有更多未列出的景区", answer)
+        self.assertNotIn("景区1（", answer)
+        self.assertEqual(docs, [])
+        self.assertEqual(meta["route"], "scenic_list")
+        self.assertTrue(context["list_pages"]["complete"])
+
+    def test_short_list_keeps_completed_cursor_for_followup(self):
+        rows = [
+            {"spot_name": f"景区{index}", "city": "茂名", "level": "4A", "ticket": "暂无", "chunk_text": "资料"}
+            for index in range(1, 4)
+        ]
+        context = {"city": "茂名", "level": "4A", "candidate_spot_list": [], "user_preference": {}}
+        with patch.object(rag_hybrid_query, "query_city_scenic_list", return_value=rows), patch.object(
+            rag_hybrid_query, "generate_answer_by_api", side_effect=AssertionError("list answers must not call LLM")
+        ):
+            rag_hybrid_query.hybrid_query("茂名有哪些4A景区", [], context, "test-session", 0, {})
+            self.assertEqual(context["list_pages"]["offset"], 3)
+            self.assertTrue(context["list_pages"]["complete"])
+
+            answer, docs, _ = rag_hybrid_query.hybrid_query(
+                "还有吗", [], context, "test-session", 0, {}, return_metadata=True
+            )
+
+        self.assertIn("共3家", answer)
+        self.assertIn("目前没有更多未列出的景区", answer)
+        self.assertEqual(docs, [])
 
     def test_missing_pronoun_context_returns_clarification(self):
         with patch.object(
